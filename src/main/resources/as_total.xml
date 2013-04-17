@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:p="http://www.springframework.org/schema/p" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+
+	<bean class="hdprobe.aggregation.DirectedAggregationKeyFactory" id="as.total.keyfactory">
+		<constructor-arg>
+			<value>as</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean class="hdprobe.aggregation.DirectedTrafficAggregatorFactory" id="as.total.objectfactory">
+	</bean>
+	
+	<bean class="hdprobe.aggregation.DirectedAggregatorContainer" id="as.total.container">
+		<constructor-arg>
+			<ref bean="as.total.keyfactory"/>
+		</constructor-arg>
+		<constructor-arg>
+			<ref bean="as.total.objectfactory"/>
+		</constructor-arg>
+		<constructor-arg>
+			<value>30</value>
+		</constructor-arg>
+		<constructor-arg>
+			<value>50000</value>
+		</constructor-arg>
+	</bean>
+	<bean class="hdprobe.export.FileExporter" id="as.total.exporter" lazy-init="true">
+		<property name="exportFile" value="/tmp/as_total.log"/>
+		<property name="exportFormat" value="${__TIMESTAMP__}|${as}|${in_bps}|${in_pps}|${out_bps}|${out_pps}"/>
+		<property name="aggregatorContainers">
+			<list>
+				<ref local="as.total.container"/>
+			</list>
+		</property>
+		<property name="expressionContext" ref="hdprobe.expression.context"/>
+	</bean>
+
+	<bean class="org.springframework.scheduling.quartz.JobDetailBean" lazy-init="true" name="as.total.container.export.job">
+		<property name="jobClass" value="hdprobe.export.ExportJob"/>
+		<property name="jobDataAsMap">
+			<map>
+				<entry key="exporter" value-ref="as.total.exporter"/>
+			</map>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.scheduling.quartz.CronTriggerBean" id="as.total.container.export.cron">
+		<property name="jobDetail" ref="as.total.container.export.job"/>
+		<property name="cronExpression" value="0,30 * * * * ?"/>
+	</bean>
+</beans>

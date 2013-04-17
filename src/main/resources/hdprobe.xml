@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	<bean id="hdprobe.expression.context" class="hdprobe.utils.expr.ExpressionContext" init-method="build"/>
+	<import resource="routerconfig.xml"/>
+	<import resource="ip_total.xml"/>
+	<import resource="if_total.xml"/>
+	<import resource="as_total.xml"/>
+	<import resource="scheduler.xml"/>
+	
+	<bean id="hdprobe.aggregation.manager" class="hdprobe.aggregation.AggregationManager">
+		<property name="aggregators">
+			<list>
+						<!--
+				<ref bean="ip.total.container"></ref>
+				<ref bean="as.total.container"></ref>
+			-->
+				<ref bean="if.total.container"></ref>
+			</list>
+		</property>
+	</bean>
+</beans>

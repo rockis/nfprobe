@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:p="http://www.springframework.org/schema/p" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+
+	<bean class="hdprobe.aggregation.DirectedAggregationKeyFactory" id="if.total.keyfactory">
+		<constructor-arg>
+			<value>snmpif</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean class="hdprobe.aggregation.DirectedTrafficAggregatorFactory" id="if.total.objectfactory">
+	</bean>
+	
+	<bean class="hdprobe.aggregation.DirectedAggregatorContainer" id="if.total.container">
+		<constructor-arg>
+			<ref bean="if.total.keyfactory"/>
+		</constructor-arg>
+		<constructor-arg>
+			<ref bean="if.total.objectfactory"/>
+		</constructor-arg>
+		<constructor-arg>
+			<value>60</value>
+		</constructor-arg>
+	</bean>
+	<bean class="hdprobe.export.FileExporter" id="if.total.exporter" lazy-init="true">
+		<property name="exportFile" value="/tmp/if_total_${__DATE__?format('HHmm')}.log"/>
+		<property name="exportFormat" value="${__DATE__?format('HHmm')}|${snmpif}|${in_bytes}|${in_packets}|${out_bytes}|${out_packets}"/>
+		<property name="aggregatorContainers">
+			<list>
+				<ref local="if.total.container"/>
+			</list>
+		</property>
+		<property name="expressionContext" ref="hdprobe.expression.context"/>
+	</bean>
+
+	<bean class="org.springframework.scheduling.quartz.JobDetailBean" lazy-init="true" name="if.total.container.export.job">
+		<property name="jobClass" value="hdprobe.export.ExportJob"/>
+		<property name="jobDataAsMap">
+			<map>
+				<entry key="exporter" value-ref="if.total.exporter"/>
+			</map>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.scheduling.quartz.CronTriggerBean" id="if.total.container.export.cron">
+		<property name="jobDetail" ref="if.total.container.export.job"/>
+		<property name="cronExpression" value="0 * * * * ?"/>
+	</bean>
+</beans>
